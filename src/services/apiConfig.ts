@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance } from 'axios'
+import axios from 'axios'
 
 export const API_BASE_URLS = {
   usuarios: import.meta.env.VITE_API_USUARIOS || '',
@@ -44,23 +44,8 @@ export const orquestadorAPI = axios.create({
   },
 })
 
-// Interceptor para agregar token a todas las peticiones
-const addAuthInterceptor = (instance: AxiosInstance) => {
-  instance.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('token')
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-    },
-    (error) => Promise.reject(error)
-  )
+// Helper para obtener headers con token
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
-
-// Aplicar interceptor a todas las instancias
-addAuthInterceptor(usuariosAPI)
-addAuthInterceptor(productosAPI)
-addAuthInterceptor(recetasAPI)
-addAuthInterceptor(analiticaAPI)
-addAuthInterceptor(orquestadorAPI)

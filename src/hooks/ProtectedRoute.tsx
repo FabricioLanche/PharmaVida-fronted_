@@ -1,19 +1,18 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from './AuthContext'
 
 interface ProtectedRouteProps {
   allowedRoles: string[]
 }
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  // Por ahora simulamos el role, luego conectaremos con el contexto de autenticación
-  const token = localStorage.getItem('token')
-  const userRole = localStorage.getItem('role') || 'guest'
+  const { user, token, isAuthenticated } = useAuth()
 
-  if (!token) {
+  if (!isAuthenticated || !token || !user) {
     return <Navigate to="/login" replace />
   }
 
-  if (!allowedRoles.includes(userRole)) {
+  if (!allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />
   }
 

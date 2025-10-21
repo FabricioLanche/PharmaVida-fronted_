@@ -1,20 +1,21 @@
 import { analiticaAPI } from '../apiConfig'
 
 export const analiticaService = {
-  // Health check
   echo: () => analiticaAPI.get('/api/analitica/echo'),
   
-  getVentasDiarias: () => analiticaAPI.get('/analitica/ventas'),
+  // Consultas de datos
+  getVentasDiarias: () => analiticaAPI.get('/api/analitica/ventas'),
   
-  getTopProductos: () => analiticaAPI.get('/analitica/top-productos'),
+  getTop10Productos: () => analiticaAPI.get('/api/analitica/top-productos'),
   
-  getTopUsuarios: () => analiticaAPI.get('/analitica/top-usuarios'),
+  getTop10Usuarios: () => analiticaAPI.get('/api/analitica/top-usuarios'),
   
-  getProductosSinVenta: () => analiticaAPI.get('/analitica/productos-sin-venta'),
+  getProductosSinVenta: () => analiticaAPI.get('/api/analitica/productos-sin-venta'),
   
-  ingestaMysql: () => analiticaAPI.post('/analitica/ingesta-mysql'),
+  // Ingesta de datos
+  ingestaMysql: () => analiticaAPI.post('/api/analitica/ingesta-mysql'),
   
-  ingestaPostgresql: () => analiticaAPI.post('/analitica/ingesta-postgresql'),
+  ingestaPostgresql: () => analiticaAPI.post('/api/analitica/ingesta-postgresql'),
   
-  ingestaMongodb: () => analiticaAPI.post('/analitica/ingesta-mongodb'),
+  ingestaMongodb: () => analiticaAPI.post('/api/analitica/ingesta-mongodb'),
 }

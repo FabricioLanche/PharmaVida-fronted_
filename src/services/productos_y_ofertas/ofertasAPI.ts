@@ -11,13 +11,19 @@ export interface OfertaData {
 }
 
 export const ofertasService = {
-  createOferta: (data: OfertaData) => productosAPI.post('/ofertas/crear', data),
+  // Listar todas las ofertas - Cambiar a /api/ofertas/all según el backend
+  listar: () => productosAPI.get('/api/ofertas/all'),
   
-  getAllOfertas: () => productosAPI.get('/ofertas/all'),
+  // Obtener oferta por ID
+  obtenerPorId: (id: number) => productosAPI.get(`/api/ofertas/${id}`),
   
-  getOfertaById: (id: number) => productosAPI.get(`/ofertas/${id}`),
+  createOferta: (data: OfertaData) => productosAPI.post('/api/ofertas/crear', data),
   
-  updateOferta: (id: number, data: OfertaData) => productosAPI.put(`/ofertas/${id}`, data),
+  getAllOfertas: () => productosAPI.get('/api/ofertas/all'),
   
-  deleteOferta: (id: number) => productosAPI.delete(`/ofertas/${id}`),
+  getOfertaById: (id: number) => productosAPI.get(`/api/ofertas/${id}`),
+  
+  updateOferta: (id: number, data: OfertaData) => productosAPI.put(`/api/ofertas/${id}`, data),
+  
+  deleteOferta: (id: number) => productosAPI.delete(`/api/ofertas/${id}`),
 }

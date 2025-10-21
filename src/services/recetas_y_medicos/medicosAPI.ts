@@ -17,6 +17,6 @@ export const medicosService = {
     if (params.page) queryParams.append('page', String(params.page))
     if (params.limit) queryParams.append('limit', String(params.limit))
     
-    return recetasAPI.get(`/medicos/filter?${queryParams.toString()}`)
+    return recetasAPI.get(`/api/medicos/filter?${queryParams.toString()}`)
   },
 }

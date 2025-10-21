@@ -1,4 +1,4 @@
-import { usuariosAPI } from '../apiConfig'
+import { usuariosAPI, getAuthHeaders } from '../apiConfig'
 
 export interface RegisterData {
   nombre: string
@@ -23,20 +23,34 @@ export interface UpdateUserData {
 }
 
 export const usuariosService = {
-  // Health check
+  // Health check - NO requiere auth
   echo: () => usuariosAPI.get('/echo'),
 
-  // Auth
-  register: (data: RegisterData) => usuariosAPI.post('/auth/register', data),
+  // Auth - NO requieren auth
+  register: (data: RegisterData) => {
+    return usuariosAPI.post('/api/auth/register', data, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  },
   
-  login: (data: LoginData) => usuariosAPI.post('/auth/login', data),
+  login: (data: LoginData) => {
+    return usuariosAPI.post('/api/auth/login', data, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  },
 
-  // User management
-  getAllUsers: () => usuariosAPI.get('/user/all'),
+  // User management - REQUIEREN auth
+  getAllUsers: () => usuariosAPI.get('/api/user/all', { headers: getAuthHeaders() }),
   
-  getMyInfo: () => usuariosAPI.get('/user/me'),
+  getMyInfo: () => usuariosAPI.get('/api/user/me', { headers: getAuthHeaders() }),
   
-  updateMyUser: (data: UpdateUserData) => usuariosAPI.put('/user/me', data),
+  updateMyUser: (data: UpdateUserData) => usuariosAPI.put('/api/user/me', data, { headers: getAuthHeaders() }),
   
-  deleteMyUser: () => usuariosAPI.delete('/user/me'),
+  deleteMyUser: () => usuariosAPI.delete('/api/user/me', { 
+    headers: getAuthHeaders() 
+  }),
 }

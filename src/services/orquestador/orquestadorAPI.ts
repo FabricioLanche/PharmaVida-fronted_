@@ -1,7 +1,8 @@
-import { orquestadorAPI } from '../apiConfig'
+import { orquestadorAPI, getAuthHeaders } from '../apiConfig'
 
 export interface CompraOrquestadaData {
-  usuarioId: number
+  dni?: string
+  usuarioId?: number
   productos: number[]
   cantidades: number[]
 }
@@ -10,11 +11,17 @@ export const orquestadorService = {
   // Health check
   echo: () => orquestadorAPI.get('/api/orchestrator/echo'),
   
-  registrarCompraOrquestada: (data: CompraOrquestadaData) => 
-    orquestadorAPI.post('/orchestrator/compras', data),
+  // REQUIEREN auth según Postman
+  registrarCompra: (data: CompraOrquestadaData) => 
+    orquestadorAPI.post('/api/orchestrator/compras', data, { headers: getAuthHeaders() }),
   
-  getMisComprasDetalladas: () => orquestadorAPI.get('/orchestrator/compras/me'),
+  listarMisComprasDetalladas: () => 
+    orquestadorAPI.get('/api/orchestrator/compras/me', { headers: getAuthHeaders() }),
   
-  validarYActualizarReceta: (recetaId: string) => 
-    orquestadorAPI.put(`/orchestrator/recetas/validar/${recetaId}`),
+  validarReceta: (recetaId: string) => 
+    orquestadorAPI.put(
+      `/api/orchestrator/recetas/validar/${recetaId}`, 
+      {}, // Body vacío
+      { headers: getAuthHeaders() }
+    ),
 }
