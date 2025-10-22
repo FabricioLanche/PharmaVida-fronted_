@@ -1,4 +1,4 @@
-import { productosAPI, getAuthHeaders } from '../apiConfig'
+import { productosAPI } from '../apiConfig'
 
 export interface ProductoData {
   nombre: string
