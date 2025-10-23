@@ -2,8 +2,8 @@ import { recetasAPI } from '../apiConfig'
 
 export const recetasService = {
   echo: () => recetasAPI.get('/echo'),
-  
-  // Listar recetas con filtros
+
+  // Listar
   listarRecetas: (params?: {
     dni?: string
     cmp?: string
@@ -11,33 +11,34 @@ export const recetasService = {
     page?: number
     pagesize?: number
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params?.dni) queryParams.append('dni', params.dni)
-    if (params?.cmp) queryParams.append('cmp', params.cmp)
-    if (params?.estado) queryParams.append('estado', params.estado)
-    if (params?.page) queryParams.append('page', String(params.page))
-    if (params?.pagesize) queryParams.append('pagesize', String(params.pagesize))
-    
-    return recetasAPI.get(`/api/recetas/filter?${queryParams.toString()}`)
+    const qp = new URLSearchParams()
+    if (params?.dni) qp.append('dni', params.dni)
+    if (params?.cmp) qp.append('cmp', params.cmp)
+    if (params?.estado) qp.append('estado', params.estado)
+    if (params?.page) qp.append('page', String(params.page))
+    if (params?.pagesize) qp.append('pagesize', String(params.pagesize))
+    return recetasAPI.get(`/api/recetas/filter?${qp.toString()}`)
   },
-  
-  // Obtener receta por ID - Corregir endpoint
-  obtenerRecetaPorId: (id: string) => recetasAPI.get(`/api/recetas/${id}`),
-  
-  // Subir receta
-  subirReceta: (formData: FormData) => recetasAPI.post('/api/recetas/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  }),
-  
-  // Validar receta
-  validarReceta: (id: string) => recetasAPI.put(`/api/recetas/${id}/validar`),
-  
-  // Eliminar receta
-  eliminarReceta: (id: string) => recetasAPI.delete(`/api/recetas/archivo/${id}`),
-  
-  // Listar médicos
+
+  // Obtener por ID
+  obtenerRecetaPorId: (id: string) =>
+    recetasAPI.get(`/api/recetas/${encodeURIComponent(id)}`),
+
+  // Subir
+  subirReceta: (formData: FormData) =>
+    recetasAPI.post('/api/recetas/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  // Validar
+  validarReceta: (id: string) =>
+    recetasAPI.put(`/api/recetas/${encodeURIComponent(id)}/validar`),
+
+  // Eliminar — OJO: este endpoint espera el **_id** del documento, no la key del archivo
+  eliminarReceta: (recetaId: string) =>
+    recetasAPI.delete(`/api/recetas/archivo/${encodeURIComponent(recetaId)}`),
+
+  // Médicos
   listarMedicos: (params?: {
     nombre?: string
     especialidad?: string
@@ -45,13 +46,12 @@ export const recetasService = {
     page?: number
     limit?: number
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params?.nombre) queryParams.append('nombre', params.nombre)
-    if (params?.especialidad) queryParams.append('especialidad', params.especialidad)
-    if (params?.colegiaturaValida !== undefined) queryParams.append('colegiaturaValida', String(params.colegiaturaValida))
-    if (params?.page) queryParams.append('page', String(params.page))
-    if (params?.limit) queryParams.append('limit', String(params.limit))
-    
-    return recetasAPI.get(`/api/medicos/filter?${queryParams.toString()}`)
+    const qp = new URLSearchParams()
+    if (params?.nombre) qp.append('nombre', params.nombre)
+    if (params?.especialidad) qp.append('especialidad', params.especialidad)
+    if (params?.colegiaturaValida !== undefined) qp.append('colegiaturaValida', String(params.colegiaturaValida))
+    if (params?.page) qp.append('page', String(params.page))
+    if (params?.limit) qp.append('limit', String(params.limit))
+    return recetasAPI.get(`/api/medicos/filter?${qp.toString()}`)
   },
 }

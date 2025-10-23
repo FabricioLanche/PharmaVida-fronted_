@@ -1,7 +1,10 @@
+// src/App.tsx
 import './styles/index.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './hooks/AuthContext'
 import { CartProvider } from './hooks/CartContext'
+
+import AdminOfertas from './pages/AdminOfertas'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -9,6 +12,7 @@ import Productos from './pages/Productos'
 import ProductoDetalle from './pages/ProductoDetalle'
 import Carrito from './pages/Carrito'
 import Checkout from './pages/Checkout'
+import CompraConfirmada from './pages/CompraConfirmada'   // <-- NUEVA
 import MisCompras from './pages/MisCompras'
 import Ofertas from './pages/Ofertas'
 import OfertaDetalle from './pages/OfertaDetalle'
@@ -40,6 +44,7 @@ function App() {
             {/* Rutas protegidas - Usuario autenticado (CLIENTE o ADMIN) */}
             <Route element={<ProtectedRoute allowedRoles={['CLIENTE', 'ADMIN']} />}>
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/compra-confirmada" element={<CompraConfirmada />} /> {/* <-- NUEVA */}
               <Route path="/mis-compras" element={<MisCompras />} />
               <Route path="/recetas" element={<MisRecetas />} />
               <Route path="/receta/:id" element={<RecetaDetalle />} />
@@ -50,9 +55,18 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
               <Route path="/admin/productos" element={<AdminProductos />} />
               <Route path="/admin/recetas" element={<AdminRecetas />} />
+              {/* Soportamos ambos paths para Analítica para evitar 404 si el navbar usa uno u otro */}
               <Route path="/admin/analitica" element={<Analitica />} />
+              <Route path="/analitica" element={<Analitica />} />
             </Route>
-
+            {/* Rutas protegidas - Solo Admin */}
+            <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+              <Route path="/admin/productos" element={<AdminProductos />} />
+              <Route path="/admin/ofertas" element={<AdminOfertas />} />   {/* ← NUEVA RUTA */}
+              <Route path="/admin/recetas" element={<AdminRecetas />} />
+              <Route path="/admin/analitica" element={<Analitica />} />
+              <Route path="/analitica" element={<Analitica />} />
+            </Route>
             {/* Ruta 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>

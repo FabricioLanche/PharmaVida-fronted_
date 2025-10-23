@@ -1,103 +1,107 @@
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/AuthContext'
-import { useCart } from '../hooks/CartContext'
+// src/pages/Carrito.tsx
+import { useMemo } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/commons/Navbar'
 import Footer from '../components/commons/Footer'
+import { useCart } from '../hooks/CartContext'
 
-function Carrito() {
+type CartItem = {
+  id?: number
+  productoId?: number
+  nombre: string
+  precio: number
+  requiere_receta?: boolean
+  cantidad: number
+}
+
+export default function Carrito() {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
-  const { items, updateQuantity, removeFromCart, clearCart } = useCart()
+  const cart = useCart() as any
+  const items: CartItem[] = cart.items || cart.cart || []
 
-  const total = items.reduce((sum, item) => sum + (item.precio || 0) * item.cantidad, 0)
+  const updateQuantity =
+    cart.updateQuantity || cart.setQuantity || ((_id: number, _q: number) => {})
+  const removeOne =
+    cart.removeFromCart || cart.removeItem || ((_id: number) => {})
 
-  const handleProcederCompra = () => {
-    if (!isAuthenticated) {
-      alert('Debes iniciar sesión para realizar la compra')
-      navigate('/login')
-    } else {
-      navigate('/checkout')
-    }
+  const getPid = (it: CartItem) => (it.productoId ?? it.id) as number
+
+  const total: number = useMemo(() => {
+    if (typeof cart.total === 'number') return cart.total
+    return (items || []).reduce(
+      (acc: number, it: CartItem) => acc + Number(it.precio) * Number(it.cantidad),
+      0
+    )
+  }, [items, cart.total])
+
+  const handlePagar = () => {
+    // <- ¡esto faltaba!
+    navigate('/checkout')
   }
 
   return (
     <div>
       <Navbar />
-      
-      <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-        <h1>Carrito de Compras</h1>
 
-        {items.length === 0 ? (
-          <div>
-            <p>Tu carrito está vacío</p>
-            <button onClick={() => navigate('/')}>Ver productos</button>
+      <main className="container-xl">
+        <section className="pv-card p-4 mb-6">
+          <h2 className="title-xl">Mi Carrito</h2>
+
+          <div className="cart-list">
+            {(!items || items.length === 0) && (
+              <p className="text-center">
+                Tu carrito está vacío.{' '}
+                <Link to="/" className="pv-link">Ir a comprar</Link>
+              </p>
+            )}
+
+            {items?.map((it) => {
+              const pid = getPid(it)
+              return (
+                <div key={pid} className="cart-item">
+                  <div className="item-info">
+                    <h4 className="item-title">{it.nombre}</h4>
+                    <div className="item-meta">Precio: S/ {Number(it.precio).toFixed(2)}</div>
+                    <div className="item-meta">Requiere receta: {it.requiere_receta ? 'Sí' : 'No'}</div>
+                  </div>
+
+                  <div className="item-actions">
+                    <input
+                      type="number"
+                      min={1}
+                      className="qty-input"
+                      value={it.cantidad}
+                      onChange={(e) =>
+                        updateQuantity(pid, Math.max(1, Number(e.target.value)))
+                      }
+                    />
+                    <button className="btn btn-danger-outline" onClick={() => removeOne(pid)}>
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        ) : (
-          <div>
-            <table border={1} style={{ width: '100%', marginBottom: '2rem' }}>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Precio</th>
-                  <th>Cantidad</th>
-                  <th>Subtotal</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map(item => (
-                  <tr key={item.productoId}>
-                    <td>{item.nombre || `Producto #${item.productoId}`}</td>
-                    <td>S/ {(item.precio || 0).toFixed(2)}</td>
-                    <td>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        value={item.cantidad}
-                        onChange={(e) => updateQuantity(item.productoId, Number(e.target.value))}
-                        style={{ width: '60px', padding: '0.25rem' }}
-                      />
-                    </td>
-                    <td>S/ {((item.precio || 0) * item.cantidad).toFixed(2)}</td>
-                    <td>
-                      <button onClick={() => removeFromCart(item.productoId)}>Eliminar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
 
-            <div style={{ textAlign: 'right', marginBottom: '2rem' }}>
-              <h2>Total: S/ {total.toFixed(2)}</h2>
-            </div>
+          {items?.length > 0 && (
+            <>
+              <div className="cart-total">Total: S/ {total.toFixed(2)}</div>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <button onClick={clearCart} style={{ padding: '0.75rem 1.5rem' }}>
-                Vaciar Carrito
-              </button>
-              <button onClick={() => navigate('/')} style={{ padding: '0.75rem 1.5rem' }}>
-                Seguir Comprando
-              </button>
-              <button 
-                onClick={handleProcederCompra}
-                style={{ 
-                  padding: '0.75rem 1.5rem', 
-                  backgroundColor: '#27ae60', 
-                  color: 'white', 
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Proceder a Comprar
-              </button>
-            </div>
-          </div>
-        )}
+              <div className="cart-actions">
+                <button className="btn btn-primary" onClick={handlePagar}>
+                  Proceder a pagar
+                </button>
+                <button className="btn btn-outline" onClick={() => navigate('/')}>
+                  Seguir comprando
+                </button>
+              </div>
+            </>
+          )}
+        </section>
       </main>
 
       <Footer />
     </div>
   )
 }
-
-export default Carrito

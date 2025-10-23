@@ -1,4 +1,5 @@
-import { useState } from 'react'
+// src/pages/Checkout.tsx
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/AuthContext'
 import { useCart } from '../hooks/CartContext'
@@ -6,58 +7,46 @@ import Navbar from '../components/commons/Navbar'
 import Footer from '../components/commons/Footer'
 import { orquestadorService } from '../services/orquestador/orquestadorAPI'
 
-function Checkout() {
+export default function Checkout() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { items, clearCart } = useCart()
   const [procesando, setProcesando] = useState(false)
 
-  const total = items.reduce((sum, item) => sum + (item.precio || 0) * item.cantidad, 0)
+  const total = useMemo(
+    () => items.reduce((sum, it: any) => sum + (Number(it.precio) || 0) * Number(it.cantidad || 0), 0),
+    [items]
+  )
+
+  const currency = (n: number) => `S/. ${n.toFixed(2)}`
 
   const handleComprar = async () => {
     if (!user?.dni) {
-      alert('Error: Usuario no identificado')
+      navigate('/login')
       return
     }
-
     setProcesando(true)
     try {
-      const productos = items.map(item => item.productoId)
-      const cantidades = items.map(item => item.cantidad)
+      const productos  = items.map((it: any) => it.productoId ?? it.id)
+      const cantidades = items.map((it: any) => it.cantidad)
 
-      // El backend espera usuarioId (number), no dni
-      // Necesitas obtener el ID del usuario desde el contexto
-      if (!user?.id) {
-        alert('Error: No se pudo obtener el ID del usuario')
-        return
-      }
+      await orquestadorService.registrarCompra({ dni: user.dni, productos, cantidades })
 
-      await orquestadorService.registrarCompra({
-        dni: user.dni,
-        productos,
-        cantidades
-      })
-
-      alert('✅ Compra realizada exitosamente')
       clearCart()
-      navigate('/mis-compras')
+      navigate('/compra-confirmada', {
+        state: { total, ts: new Date().toISOString() },
+        replace: true,
+      })
     } catch (error: any) {
-      console.error('Error en compra:', error)
-      
-      // Manejar error de productos que requieren receta
-      if (error.response?.status === 400 && error.response?.data?.details?.productos_sin_receta) {
-        const productosConReceta = error.response.data.details.productos_sin_receta.join(', ')
+      if (error?.response?.status === 400 && error?.response?.data?.details?.productos_sin_receta) {
+        const faltan = error.response.data.details.productos_sin_receta.join(', ')
         alert(
-          `⚠️ Atención: Los siguientes productos requieren receta médica validada:\n\n` +
-          `${productosConReceta}\n\n` +
-          `Por favor, sube una receta médica válida en la sección "Mis Recetas" antes de continuar con la compra.`
+          `Los siguientes productos requieren receta válida: ${faltan}.\n` +
+          `Sube tu receta en la sección "Recetas" y vuelve a intentarlo.`
         )
-        const subirReceta = confirm('¿Deseas ir a la sección de recetas ahora?')
-        if (subirReceta) {
-          navigate('/recetas')
-        }
+        navigate('/recetas')
       } else {
-        alert(`❌ Error al procesar la compra: ${error.response?.data?.error || error.message}`)
+        alert('No se pudo procesar la compra. Inténtalo nuevamente.')
       }
     } finally {
       setProcesando(false)
@@ -66,93 +55,145 @@ function Checkout() {
 
   if (items.length === 0) {
     return (
-      <div>
+      <>
         <Navbar />
-        <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-          <h1>Checkout</h1>
-          <p>No hay productos en el carrito</p>
-          <button onClick={() => navigate('/')}>Ver productos</button>
+        <main className="container-xl">
+          <section className="pv-card p-4 mb-6">
+            <h2 className="title-xl">Resumen y Pago</h2>
+            <p>No hay productos en el carrito.</p>
+            <button className="btn btn-accent" onClick={() => navigate('/')}>
+              Ver productos
+            </button>
+          </section>
         </main>
         <Footer />
-      </div>
+      </>
     )
   }
 
   return (
     <div>
       <Navbar />
-      
-      <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-        <h1>Resumen de Compra</h1>
 
-        <section style={{ border: '1px solid #ddd', padding: '1rem', marginBottom: '2rem' }}>
-          <h2>Datos del Cliente</h2>
-          <p><strong>Nombre:</strong> {user?.nombre} {user?.apellido}</p>
-          <p><strong>DNI:</strong> {user?.dni}</p>
-          <p><strong>Email:</strong> {user?.email}</p>
+      <main className="container-xl">
+        <h2 className="title-xl">Resumen y Pago</h2>
+
+        {/* TOTAL A PAGAR */}
+        <section
+          className="pv-card"
+          style={{ padding: '12px 16px', marginBottom: '16px' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: '16px' }}>Total a pagar</strong>
+            <strong style={{ fontSize: '16px' }}>{currency(total)}</strong>
+          </div>
+          <div className="hint" style={{ marginTop: '.5rem' }}>
+            Los productos que requieran receta pueden quedar pendientes hasta su validación.
+          </div>
         </section>
 
-        <section style={{ border: '1px solid #ddd', padding: '1rem', marginBottom: '2rem' }}>
-          <h2>Productos</h2>
-          <table border={1} style={{ width: '100%' }}>
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Precio</th>
-                <th>Cantidad</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(item => (
-                <tr key={item.productoId}>
-                  <td>{item.nombre || `Producto #${item.productoId}`}</td>
-                  <td>S/ {(item.precio || 0).toFixed(2)}</td>
-                  <td>{item.cantidad}</td>
-                  <td>S/ {((item.precio || 0) * item.cantidad).toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* DETALLE DE CARRITO */}
+        <section className="pv-card" style={{ padding: 0, marginBottom: '24px' }}>
+          <div style={{ padding: '12px 16px', fontWeight: 700 }}>Detalle de carrito</div>
+
+          <div style={{ padding: '0 12px 12px 12px' }}>
+            <div
+              style={{
+                border: '1px solid var(--pv-border, #e5e7eb)',
+                borderRadius: 12,
+                overflow: 'hidden'
+              }}
+            >
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'separate',
+                  borderSpacing: 0,
+                  fontSize: 14
+                }}
+              >
+                <colgroup>
+                  <col />
+                  <col style={{ width: 90 }} />
+                  <col style={{ width: 120 }} />
+                  <col style={{ width: 120 }} />
+                </colgroup>
+
+                <thead>
+                  <tr
+                    style={{
+                      background: 'var(--pv-table-head, #f8fafc)',
+                      borderBottom: '1px solid var(--pv-border, #e5e7eb)'
+                    }}
+                  >
+                    <th style={{ textAlign: 'left', padding: '10px 14px' }}>Producto</th>
+                    <th style={{ textAlign: 'center', padding: '10px 14px' }}>Cant.</th>
+                    <th style={{ textAlign: 'right', padding: '10px 14px' }}>P. Unit</th>
+                    <th style={{ textAlign: 'right', padding: '10px 14px' }}>Total</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {items.map((it: any, idx: number) => {
+                    const precio = Number(it.precio || 0)
+                    const cant   = Number(it.cantidad || 0)
+                    const sub    = precio * cant
+                    return (
+                      <tr key={(it.productoId ?? it.id) + '-' + idx}>
+                        <td style={{ padding: '12px 14px', borderTop: '1px solid var(--pv-border, #e5e7eb)' }}>
+                          {it.nombre || `Producto #${it.productoId ?? it.id}`}
+                        </td>
+                        <td style={{
+                          padding: '12px 14px',
+                          textAlign: 'center',
+                          borderTop: '1px solid var(--pv-border, #e5e7eb)'
+                        }}>
+                          {cant}
+                        </td>
+                        <td style={{
+                          padding: '12px 14px',
+                          textAlign: 'right',
+                          borderTop: '1px solid var(--pv-border, #e5e7eb)'
+                        }}>
+                          {currency(precio)}
+                        </td>
+                        <td style={{
+                          padding: '12px 14px',
+                          textAlign: 'right',
+                          borderTop: '1px solid var(--pv-border, #e5e7eb)'
+                        }}>
+                          {currency(sub)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
 
-        <section style={{ textAlign: 'right', marginBottom: '2rem' }}>
-          <h2>Total a Pagar: S/ {total.toFixed(2)}</h2>
-        </section>
-
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-          <button 
-            onClick={() => navigate('/carrito')}
-            disabled={procesando}
-            style={{ padding: '0.75rem 1.5rem' }}
-          >
-            Volver al Carrito
-          </button>
-          <button 
+        {/* BOTONES (verde arriba, naranja abajo) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+          <button
+            className="btn btn-primary"
             onClick={handleComprar}
             disabled={procesando}
-            style={{ 
-              padding: '0.75rem 2rem', 
-              backgroundColor: procesando ? '#ccc' : '#27ae60', 
-              color: 'white', 
-              border: 'none',
-              cursor: procesando ? 'not-allowed' : 'pointer',
-              fontSize: '1.1rem',
-              fontWeight: 'bold'
-            }}
           >
-            {procesando ? 'Procesando...' : '✓ Confirmar Compra'}
+            {procesando ? 'Procesando…' : 'Realizar compra'}
+          </button>
+
+          <button
+            className="btn btn-accent"
+            onClick={() => navigate('/carrito')}
+            disabled={procesando}
+          >
+            Volver al carrito
           </button>
         </div>
-
-        <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>
-          Nota: Si algún producto requiere receta, el sistema verificará automáticamente que tengas una receta válida.
-        </p>
       </main>
 
       <Footer />
     </div>
   )
 }
-
-export default Checkout

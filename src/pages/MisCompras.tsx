@@ -21,6 +21,10 @@ interface Compra {
   productos_detalle: ProductoDetalle[]
 }
 
+interface ComprasResponse {
+  compras: Compra[]
+}
+
 function MisCompras() {
   const [compras, setCompras] = useState<Compra[]>([])
   const [loading, setLoading] = useState(true)

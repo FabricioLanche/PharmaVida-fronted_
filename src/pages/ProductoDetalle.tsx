@@ -247,6 +247,6 @@ function ProductoDetalle() {
       <Footer />
     </div>
   )
-}
+} 
 
 export default ProductoDetalle

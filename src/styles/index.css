@@ -1,1 +1,311 @@
-@import "tailwindcss";
+/* ================== PharmaVida — Theme base ================== */
+:root{
+  --pv-green:#16a34a;
+  --pv-green-600:#15803d;
+  --pv-orange:#f97316;
+  --pv-orange-600:#ea580c;
+  --pv-yellow:#eab308;
+  --pv-surface:#f9fafb;
+  --pv-card:#ffffff;
+  --pv-text:#0b1720;
+  --pv-muted:#4b5563;
+  --pv-border:rgba(0,0,0,0.08);
+}
+
+html,body,#root{height:100%}
+body{
+  margin:0;
+  background:var(--pv-surface);
+  color:var(--pv-text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+
+/* ============== Layout helpers ============== */
+.container-xl{max-width:1200px;margin:0 auto;padding:2rem}
+.mb-3{margin-bottom:1rem}
+.mb-4{margin-bottom:1.5rem}
+.mb-6{margin-bottom:2rem}
+.text-center{text-align:center}
+.text-lg{font-size:1.1rem}
+.w-100{width:100%}
+.flex-1{flex:1}
+.d-block{display:block}
+.d-flex{display:flex}
+.align-end{align-items:flex-end}
+.p-4{padding:1rem}
+
+/* ============== Cards, panels, inputs ============== */
+.pv-card{
+  background:var(--pv-card);
+  border:1px solid var(--pv-border);
+  border-radius:12px;
+  box-shadow:0 8px 16px rgba(11,23,32,0.06);
+}
+.pv-card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1rem;
+}
+.title-xl{font-size:2rem;line-height:1.1;font-weight:800;margin:.2rem 0 1rem}
+.page-pill{
+  display:inline-flex;align-items:center;gap:.35rem;
+  padding:.35rem .6rem;border-radius:999px;
+  background:#FFF3E9;color:var(--pv-orange-600);
+  border:1px solid rgba(234,88,12,.25);
+  font-weight:700;
+}
+
+.filter-panel{
+  background:var(--pv-card);
+  border:1px solid var(--pv-border);
+  border-radius:12px;
+  box-shadow:0 8px 16px rgba(11,23,32,0.06);
+  padding:1.25rem;
+}
+
+.results-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:1.5rem;
+}
+.filters-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:1rem;
+}
+.results-count{color:var(--pv-muted)}
+
+.form-label{font-weight:700}
+.hint{font-size:.9rem;font-weight:400;color:var(--pv-muted);margin-left:.35rem}
+.form-control,.form-select{
+  width:100%;padding:.7rem .9rem;font-size:1rem;background:#fff;
+  border:1px solid var(--pv-border);border-radius:12px;
+  transition:box-shadow .15s ease,border-color .15s ease;
+}
+.form-control:focus,.form-select:focus{
+  outline:none;border-color:var(--pv-green-600);
+  box-shadow:0 0 0 4px rgba(21,128,61,.18);
+}
+
+.search-row{display:flex;gap:.5rem;align-items:center}
+
+.toggle-filtros{
+  margin-top:.75rem;background:transparent;border:none;
+  color:var(--pv-green-600);cursor:pointer;font-weight:700;
+}
+
+/* ============== Buttons ============== */
+.btn{
+  appearance:none;border:none;border-radius:999px;
+  padding:.65rem 1.2rem;font-weight:700;cursor:pointer;
+  box-shadow:0 8px 16px rgba(17,24,39,0.06);
+  transition:transform .08s ease,opacity .15s ease,background-color .15s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.6;cursor:not-allowed;box-shadow:none}
+
+.btn-primary{background:var(--pv-green);color:#fff}
+.btn-primary:hover{background:var(--pv-green-600)}
+
+.btn-accent{background:var(--pv-orange);color:#fff}
+.btn-accent:hover{background:var(--pv-orange-600)}
+
+.btn-outline{
+  background:#fff;color:#0b1720;
+  border:1px solid var(--pv-border);border-radius:10px;
+  padding:.55rem 1rem;font-weight:700;
+}
+.btn-outline:hover{background:#fff;box-shadow:0 4px 10px rgba(17,24,39,0.06)}
+.btn-outline[disabled]{opacity:.6;cursor:not-allowed;box-shadow:none}
+
+/* ============== Banner ============== */
+.banner-info{
+  background:#FFF3E9;color:var(--pv-orange-600);
+  border:1px solid rgba(234,88,12,.25);
+  border-radius:12px;padding:.8rem 1rem;
+}
+
+/* ============== Card footer (paginación) ============== */
+.pv-card-footer{
+  margin-top:1rem;padding-top:.9rem;
+  border-top:1px solid var(--pv-border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.page-label{font-weight:700;color:#0b1720}
+.btn-group{display:flex;gap:.5rem}
+
+/* ============== NAVBAR ============== */
+.pv-nav{
+  background:#fff;
+  border-bottom:1px solid color-mix(in srgb, var(--pv-green) 12%, #ffffff);
+  position:sticky;top:0;z-index:50;
+}
+.pv-nav-inner{
+  max-width:1200px;margin:0 auto;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;gap:1rem;
+}
+.pv-left{display:flex;align-items:center;gap:1.5rem}
+
+/* LOGO solo en verde */
+.pv-brand{
+  text-decoration:none;font-weight:900;letter-spacing:.2px;font-size:1.25rem;
+  color:var(--pv-green);
+}
+.pv-brand .brand-strong{color:inherit}
+
+/* Links en negro apagado */
+.pv-nav-links,.pv-nav-right{display:flex;align-items:center;gap:1.1rem}
+.pv-link{
+  text-decoration:none;font-weight:700;color:var(--pv-text);
+  opacity:.75;transition:opacity .15s ease;
+}
+.pv-link:hover,.pv-link.active{opacity:1;color:var(--pv-text)}
+.pv-link:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--pv-green) 25%, transparent);
+  border-radius:8px;
+}
+
+/* ============== FOOTER ============== */
+.pv-footer{
+  display:block;width:100%;margin-top:2rem;padding:1rem 0;
+  text-align:center;color:var(--pv-muted);
+  border-top:1px solid var(--pv-border);background:#fff;font-weight:600;
+}
+
+/* ============== Grid & cards “chafa” (lista compacta) ============== */
+.grid-chafa{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:14px;
+}
+.chafa-card{
+  background:#fff;border:1px solid var(--pv-border);
+  border-radius:10px;padding:12px 14px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.chafa-title{
+  font-weight:700;font-size:.95rem;color:var(--pv-text);
+  margin:0 0 4px 0;
+}
+.chafa-sub{
+  font-size:.82rem;color:#6b7280;margin-bottom:6px;
+}
+.chafa-price{
+  font-size:.86rem;color:#111;
+}
+/* Tarjeta clicable sin subrayado */
+.chafa-card--link {
+  display: block;
+  text-decoration: none;     /* ← quita el subrayado */
+  color: inherit;            /* usa el color del texto normal */
+}
+
+.chafa-card--link .chafa-title,
+.chafa-card--link .chafa-sub,
+.chafa-card--link .chafa-price {
+  text-decoration: none;     /* por si el navegador insiste */
+}
+
+/* (Opcional) efecto hover sutil */
+.chafa-card--link:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+.chafa-card--link:hover .chafa-title {
+  color: var(--pv-green-600);
+}
+/* Tarjeta clicable sin subrayado */
+.chafa-card--link { display:block; text-decoration:none; color:inherit; }
+.chafa-card--link .chafa-title,
+.chafa-card--link .chafa-sub,
+.chafa-card--link .chafa-price { text-decoration:none; }
+
+/* Menú Admin en navbar */
+.admin-menu { position: relative; }
+.admin-trigger { background: transparent; border: 0; cursor: pointer; padding: 0; }
+.admin-dropdown {
+  position: absolute; right: 0; top: 120%;
+  background: #fff; border: 1px solid var(--pv-border); border-radius: 10px;
+  padding: .35rem 0; min-width: 220px;
+  box-shadow: 0 12px 24px rgba(0,0,0,.08);
+  display: grid; z-index: 60;
+}
+.admin-item {
+  padding: .55rem .9rem; text-decoration: none; color: var(--pv-text);
+}
+.admin-item:hover { background: #f6f7f8; }
+/* Badge del carrito */
+.cart-link { position: relative; }
+.cart-badge{
+  position:absolute; top:-8px; right:-12px;
+  background: var(--pv-orange);
+  color:#fff; font-weight:800; font-size:12px; line-height:18px;
+  min-width: 18px; height:18px; padding:0 6px;
+  border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+
+/* Carrito */
+.cart-list{ margin-top:.5rem; }
+.cart-item{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1rem;
+  background:#fff; border:1px solid var(--pv-border);
+  border-radius:8px; padding:.75rem 1rem; margin-bottom:.6rem;
+}
+.item-info { min-width: 0; }
+.item-title{ margin:0 0 .25rem 0; font-size:1rem; font-weight:800; }
+.item-meta{ font-size:.9rem; color:var(--pv-muted); }
+.item-actions{ display:flex; align-items:center; gap:.5rem; }
+.qty-input{
+  width:56px; text-align:center; padding:.35rem .25rem;
+  border:1px solid var(--pv-border); border-radius:8px; background:#fff;
+}
+.btn-danger-outline{
+  background:#fff; color:#ef4444; border:1px solid #ef4444;
+  border-radius:10px; padding:.45rem .8rem; font-weight:700;
+}
+.btn-danger-outline:hover{ background:#fff0f0; }
+.cart-total{ text-align:right; font-weight:800; margin:.25rem 0 1rem; }
+.cart-actions{ display:flex; gap:.75rem; }
+.pv-cart-link { position: relative; }
+.pv-badge{
+  position:absolute; top:-6px; right:-12px;
+  min-width:20px; height:20px; padding:0 6px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:999px; background:#f97316; color:#fff;
+  font-size:12px; font-weight:800; line-height:1;
+  border:2px solid #fff;
+}
+
+.pv-dropdown{ position:relative; }
+.pv-dropdown-menu{
+  position:absolute; right:0; top:calc(100% + 8px);
+  background:#fff; border:1px solid var(--pv-border);
+  border-radius:10px; box-shadow:0 10px 20px rgba(0,0,0,.08);
+  min-width:200px; padding:6px;
+  z-index:1000;
+}
+.pv-dropdown-item{
+  display:block; padding:.6rem .8rem; border-radius:8px;
+  color:var(--pv-text); text-decoration:none;
+}
+.pv-dropdown-item:hover{ background:#f7f7f8; }
+/* Botón Admin naranja (trigger del dropdown) */
+.pv-admin-trigger{
+  background:#f59e0b;   /* naranja */
+  color:#fff;
+  padding:.45rem .9rem;
+  border:none;
+  border-radius:9999px;
+  font-weight:700;
+  cursor:pointer;
+}
+.pv-admin-trigger:hover{ opacity:.9; }
+
+/* (Opcional) asegúrate de que tu .pv-dropdown-menu siga funcionando
+   con tu layout actual (posición absoluta, sombra, etc.) */

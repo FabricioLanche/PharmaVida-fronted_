@@ -1,14 +1,7 @@
-function Footer() {
-  const currentYear = new Date().getFullYear()
-
+export default function Footer() {
   return (
-    <footer>
-      <div>
-        <p>&copy; {currentYear} PharmaVida. Todos los derechos reservados.</p>
-        <p>Email: contacto@pharmavida.com | Teléfono: (01) 123-4567</p>
-      </div>
+    <footer className="pv-footer" role="contentinfo">
+      © {new Date().getFullYear()} <strong>PharmaVida</strong>. Todos los derechos reservados.
     </footer>
   )
 }
-
-export default Footer
