@@ -121,13 +121,14 @@ export default function Perfil() {
       const info = await usuariosService.getMyInfo()
       const token = localStorage.getItem('token') || ''
       login(token, {
+        id: info.data.id,
         nombre: info.data.nombre,
         apellido: info.data.apellido,
         email: info.data.email,
         dni: info.data.dni,
         role: info.data.role,
         distrito: info.data.distrito,
-      } as any)
+      })
 
       setOk('Información actualizada correctamente.')
     } catch (e: any) {

@@ -12,69 +12,54 @@ function ProductoCard({ producto }: ProductoCardProps) {
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       <div style={{
-        border: '1px solid #ddd',
+        border: '1px solid #e8e8e8',
         borderRadius: '8px',
-        padding: '1rem',
+        padding: '1.25rem',
         backgroundColor: 'white',
         cursor: 'pointer',
         transition: 'transform 0.2s, box-shadow 0.2s',
-        height: '100%'
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.35rem',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)'
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+        e.currentTarget.style.transform = 'translateY(-2px)'
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'none'
+        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)'
       }}
       >
-        <h3 style={{ margin: '0 0 0.5rem 0', color: '#2c3e50' }}>
+        <h3 style={{ 
+          margin: '0', 
+          color: '#2c3e50',
+          fontSize: '1rem',
+          fontWeight: '600',
+          lineHeight: '1.4'
+        }}>
           {producto.nombre}
         </h3>
         
-        <div style={{ 
-          display: 'inline-block',
-          backgroundColor: '#3498db',
-          color: 'white',
-          padding: '0.25rem 0.5rem',
-          borderRadius: '4px',
-          fontSize: '0.85rem',
-          marginBottom: '0.5rem'
+        <p style={{ 
+          fontSize: '0.875rem',
+          color: '#7f8c8d',
+          margin: '0',
+          lineHeight: '1.3'
         }}>
           {producto.tipo}
-        </div>
-
-        <p style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 'bold', 
-          color: '#27ae60',
-          margin: '0.5rem 0'
-        }}>
-          S/ {producto.precio.toFixed(2)}
         </p>
 
         <p style={{ 
-          fontSize: '0.9rem',
-          color: producto.stock > 0 ? '#27ae60' : '#e74c3c',
-          margin: '0.5rem 0'
+          fontSize: '0.95rem', 
+          fontWeight: '400', 
+          color: '#2c3e50',
+          margin: '0.5rem 0 0 0'
         }}>
-          Stock: {producto.stock} unidades
+          Precio: S/ {producto.precio.toFixed(2)}
         </p>
-
-        {producto.requiere_receta && (
-          <div style={{
-            backgroundColor: '#f39c12',
-            color: 'white',
-            padding: '0.25rem 0.5rem',
-            borderRadius: '4px',
-            fontSize: '0.85rem',
-            display: 'inline-block',
-            marginTop: '0.5rem'
-          }}>
-            ⚕️ Requiere Receta
-          </div>
-        )}
       </div>
     </Link>
   )

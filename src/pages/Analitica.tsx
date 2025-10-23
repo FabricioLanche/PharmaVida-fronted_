@@ -42,8 +42,8 @@ const labelize = (k: string) =>
 // --- Sparkline grande con relleno
 const Sparkline: React.FC<{ values: number[]; width?: number; height?: number }> = ({
   values,
-  width = 420,
-  height = 120,
+  width = 640,
+  height = 140,
 }) => {
   if (!values.length) return null
   const W = width
@@ -87,6 +87,16 @@ export default function Analitica() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
 
+  // util para leer números aunque lleguen como string
+  const asNumber = (v: any) => {
+    if (typeof v === 'number') return v
+    if (typeof v === 'string' && v.trim() !== '') {
+      const n = Number(v.replace(/,/g, ''))
+      if (Number.isFinite(n)) return n
+    }
+    return NaN
+  }
+
   const ejecutarConsulta = async (nombre: string, fn: () => Promise<any>) => {
     setLoading(true)
     try {
@@ -101,7 +111,26 @@ export default function Analitica() {
         : raw
         ? [raw]
         : []
-      setResultado({ nombre, data })
+
+      // Normalización ligera: coerciona números / deja fecha en YYYY-MM-DD
+      const numKeys = /(monto|importe|amount|total|unidades|cantidad|qty|precio|stock)/i
+      const dateKeys = /(fecha|date|day)/i
+      const normalized = data.map((row) => {
+        const out: any = { ...row }
+        Object.keys(out).forEach((k) => {
+          const v = out[k]
+          if (numKeys.test(k)) {
+            const n = asNumber(v)
+            if (Number.isFinite(n)) out[k] = n
+          } else if (dateKeys.test(k)) {
+            const s = String(v ?? '')
+            out[k] = s.length > 10 ? s.slice(0, 10) : s
+          }
+        })
+        return out
+      })
+
+      setResultado({ nombre, data: normalized })
       setPage(1)
     } catch (error: any) {
       alert(`❌ Error en ${nombre}: ${error?.message || 'Desconocido'}`)
@@ -111,9 +140,10 @@ export default function Analitica() {
     }
   }
 
-  // Columnas derivadas (heurística + alias conocidos)
+  // Columnas derivadas (añadimos flag numeric para estilos)
   const columns = useMemo(() => {
-    if (!resultado?.data?.length) return [] as { key: string; label: string; align?: 'right' | 'center' }[]
+    type Col = { key: string; label: string; align?: 'right' | 'center'; numeric?: boolean }
+    if (!resultado?.data?.length) return [] as Col[]
 
     const first = resultado.data[0]
     const q = (resultado.nombre || '').toLowerCase()
@@ -127,9 +157,9 @@ export default function Analitica() {
         findField(first, [(k) => /unidades|cantidad|qty/i.test(k)]) || 'unidades'
       return [
         { key: fechaKey, label: 'Fecha' },
-        { key: montoKey, label: 'Total monto (S/)', align: 'right' as const },
-        { key: unidadesKey, label: 'Unidades', align: 'right' as const },
-      ]
+        { key: montoKey, label: 'Total monto (S/)', align: 'right', numeric: true },
+        { key: unidadesKey, label: 'Unidades', align: 'right', numeric: true },
+      ] as Col[]
     }
 
     if (q.includes('top')) {
@@ -141,18 +171,13 @@ export default function Analitica() {
         findField(first, [(k) => /unidades|cantidad|qty/i.test(k)]) || 'unidades'
       return [
         { key: nombreKey, label: labelize(nombreKey) },
-        { key: montoKey, label: 'Total (S/)', align: 'right' as const },
-        { key: unidadesKey, label: 'Unidades', align: 'right' as const },
-      ]
-    }
-
-    if (q.includes('sin venta')) {
-      const keys = Object.keys(first)
-      return keys.slice(0, 5).map((k) => ({ key: k, label: labelize(k) }))
+        { key: montoKey, label: 'Total (S/)', align: 'right', numeric: true },
+        { key: unidadesKey, label: 'Unidades', align: 'right', numeric: true },
+      ] as Col[]
     }
 
     const keys = Object.keys(first)
-    return keys.slice(0, 5).map((k) => ({ key: k, label: labelize(k) }))
+    return keys.slice(0, 5).map((k) => ({ key: k, label: labelize(k) })) as Col[]
   }, [resultado])
 
   const paged = useMemo(() => {
@@ -190,143 +215,143 @@ export default function Analitica() {
     }
   }, [resultado])
 
-  const renderCell = (row: any, key: string, align?: 'right' | 'center') => {
+  const renderCell = (row: any, key: string, align?: 'right' | 'center', numeric?: boolean) => {
     const val = row[key]
-    const style: React.CSSProperties = { textAlign: align || 'left', whiteSpace: 'nowrap' }
-    if (typeof val === 'number' && /monto|importe|amount|total/i.test(key)) {
-      return <td style={style}>{formatMoney(val)}</td>
+    const style: React.CSSProperties = {
+      textAlign: align || 'left',
+      whiteSpace: 'nowrap',
+      fontVariantNumeric: 'tabular-nums',
     }
-    if (typeof val === 'number' && (align === 'right' || /unidades|cantidad|qty/i.test(key))) {
-      return <td style={style}>{prettyInt(val)}</td>
+
+    if (/fecha|date|day/i.test(key)) {
+      const s = String(val ?? '')
+      return <td className={numeric ? 'num' : ''} style={style}>{s.length > 10 ? s.slice(0, 10) : s}</td>
     }
-    return <td style={style}>{String(val ?? '—')}</td>
+
+    if (/monto|importe|amount|total/i.test(key)) {
+      const n = asNumber(val)
+      return (
+        <td className="num" style={{ ...style, textAlign: 'right' }}>
+          {Number.isFinite(n) ? formatMoney(n) : String(val ?? '—')}
+        </td>
+      )
+    }
+
+    if (/unidades|cantidad|qty/i.test(key)) {
+      const n = asNumber(val)
+      return (
+        <td className="num" style={{ ...style, textAlign: 'right' }}>
+          {Number.isFinite(n) ? prettyInt(n) : String(val ?? '—')}
+        </td>
+      )
+    }
+
+    return <td className={numeric ? 'num' : ''} style={style}>{String(val ?? '—')}</td>
   }
 
   return (
     <div>
       <Navbar />
 
+      {/* Estilos locales para que “se vea como tabla” */}
+      <style>{`
+        .results-grid{
+          display:grid;
+          grid-template-columns: 1fr 360px;
+          border-radius:14px;
+          overflow:hidden;
+          box-shadow:0 16px 40px rgba(0,0,0,.06);
+        }
+        @media (max-width: 1024px){
+          .results-grid{ grid-template-columns: 1fr; }
+        }
+        .pv-table {
+          width:100%;
+          table-layout:auto;
+          border-collapse:separate;
+          border-spacing:0;
+          border:1px solid #e5e7eb;
+          border-radius:10px;
+          overflow:hidden;
+        }
+        .pv-table thead th{
+          position:sticky;
+          top:0;
+          background:#fff;
+          z-index:2;
+          padding:10px 12px;
+          border-bottom:2px solid #e5e7eb;
+          text-align:left;
+        }
+        .pv-table tbody td{
+          padding:10px 12px;
+          border-bottom:1px solid #eef2f7;
+        }
+        .pv-table tbody tr:nth-child(odd){
+          background:rgba(0,0,0,.02);
+        }
+        .pv-table tbody tr:hover{
+          background:rgba(99,102,241,.06);
+        }
+        .pv-table th.num,.pv-table td.num{
+          text-align:right;
+        }
+        .spark-wrap {
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          gap:6px;
+          padding:18px 12px 8px;
+        }
+        .spark-title{
+          font-weight:700;
+          font-size:18px;
+          text-align:center;
+        }
+      `}</style>
+
       <main className="container-xl">
         <h2 className="title-xl">Analítica</h2>
 
         {/* Controles */}
-        <section
-          className="pv-card p-3 mb-6"
-          style={{ boxShadow: '0 10px 30px rgba(0,0,0,.05)', borderRadius: 14 }}
-        >
+        <section className="pv-card p-3 mb-6" style={{ boxShadow: '0 10px 30px rgba(0,0,0,.05)', borderRadius: 14 }}>
           <h3 style={{ marginTop: 0 }}>Consultas de Datos</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-            <button
-              className="btn btn-outline"
-              onClick={() => ejecutarConsulta('Ventas Diarias', analiticaService.getVentasDiarias)}
-              disabled={loading}
-            >
-              Ventas Diarias
-            </button>
-            <button
-              className="btn btn-outline"
-              onClick={() => ejecutarConsulta('Top 10 Productos', analiticaService.getTop10Productos)}
-              disabled={loading}
-            >
-              Top 10 Productos
-            </button>
-            <button
-              className="btn btn-outline"
-              onClick={() => ejecutarConsulta('Top 10 Usuarios', analiticaService.getTop10Usuarios)}
-              disabled={loading}
-            >
-              Top 10 Usuarios
-            </button>
-            <button
-              className="btn btn-outline"
-              onClick={() => ejecutarConsulta('Productos Sin Venta', analiticaService.getProductosSinVenta)}
-              disabled={loading}
-            >
-              Productos Sin Venta
-            </button>
+            <button className="btn btn-outline" onClick={() => ejecutarConsulta('Ventas Diarias', analiticaService.getVentasDiarias)} disabled={loading}>Ventas Diarias</button>
+            <button className="btn btn-outline" onClick={() => ejecutarConsulta('Top 10 Productos', analiticaService.getTop10Productos)} disabled={loading}>Top 10 Productos</button>
+            <button className="btn btn-outline" onClick={() => ejecutarConsulta('Top 10 Usuarios', analiticaService.getTop10Usuarios)} disabled={loading}>Top 10 Usuarios</button>
+            <button className="btn btn-outline" onClick={() => ejecutarConsulta('Productos Sin Venta', analiticaService.getProductosSinVenta)} disabled={loading}>Productos Sin Venta</button>
           </div>
 
           <hr style={{ margin: '1rem 0' }} />
 
           <h3 style={{ marginTop: 0 }}>Ingesta de Datos</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-            <button
-              className="btn btn-accent"
-              onClick={() => ejecutarConsulta('Ingesta MySQL', analiticaService.ingestaMysql)}
-              disabled={loading}
-            >
-              Ingesta MySQL
-            </button>
-            <button
-              className="btn btn-accent"
-              onClick={() => ejecutarConsulta('Ingesta PostgreSQL', analiticaService.ingestaPostgresql)}
-              disabled={loading}
-            >
-              Ingesta PostgreSQL
-            </button>
-            <button
-              className="btn btn-accent"
-              onClick={() => ejecutarConsulta('Ingesta MongoDB', analiticaService.ingestaMongodb)}
-              disabled={loading}
-            >
-              Ingesta MongoDB
-            </button>
+            <button className="btn btn-accent" onClick={() => ejecutarConsulta('Ingesta MySQL', analiticaService.ingestaMysql)} disabled={loading}>Ingesta MySQL</button>
+            <button className="btn btn-accent" onClick={() => ejecutarConsulta('Ingesta PostgreSQL', analiticaService.ingestaPostgresql)} disabled={loading}>Ingesta PostgreSQL</button>
+            <button className="btn btn-accent" onClick={() => ejecutarConsulta('Ingesta MongoDB', analiticaService.ingestaMongodb)} disabled={loading}>Ingesta MongoDB</button>
           </div>
         </section>
 
         {/* Resultado */}
         {resultado ? (
-          <section
-            className="pv-card p-0"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 360px',
-              borderRadius: 14,
-              overflow: 'hidden',
-              boxShadow: '0 16px 40px rgba(0,0,0,.06)',
-            }}
-          >
+          <section className="pv-card p-0 results-grid">
             {/* Columna izquierda */}
             <div style={{ borderRight: '1px solid var(--pv-border,#e5e7eb)' }}>
-              <div
-                className="p-3"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  gap: 12,
-                }}
-              >
-                <div style={{ fontWeight: 700, fontSize: 18 }}>{resultado.nombre}</div>
-                {resumen?.serie?.length ? (
-                  <div title="Tendencia (monto)" style={{ marginTop: -8 }}>
-                    <Sparkline values={resumen.serie} width={440} height={120} />
-                  </div>
-                ) : null}
+              {/* Título + sparkline centrado */}
+              <div className="spark-wrap">
+                <div className="spark-title">{resultado.nombre}</div>
+                {resumen?.serie?.length ? <Sparkline values={resumen.serie} /> : null}
               </div>
 
+              {/* Tabla */}
               <div style={{ padding: '0 12px 12px 12px' }}>
                 <div className="pv-table-wrap" style={{ overflowX: 'auto' }}>
-                  <table
-                    className="pv-table"
-                    style={{
-                      borderCollapse: 'separate',
-                      borderSpacing: 0,
-                    }}
-                  >
+                  <table className="pv-table">
                     <thead>
                       <tr>
                         {columns.map((c) => (
-                          <th
-                            key={c.key}
-                            style={{
-                              textAlign: c.align || 'left',
-                              position: 'sticky',
-                              top: 0,
-                              background: '#fff',
-                              zIndex: 1,
-                            }}
-                          >
+                          <th key={c.key} className={c.numeric ? 'num' : ''} style={{ textAlign: c.align || 'left' }}>
                             {c.label}
                           </th>
                         ))}
@@ -335,19 +360,12 @@ export default function Analitica() {
                     <tbody>
                       {paged.length === 0 ? (
                         <tr>
-                          <td colSpan={columns.length} style={{ textAlign: 'center' }}>
-                            Sin datos
-                          </td>
+                          <td colSpan={columns.length} style={{ textAlign: 'center' }}>Sin datos</td>
                         </tr>
                       ) : (
                         paged.map((row, i) => (
-                          <tr
-                            key={i}
-                            style={{
-                              background: i % 2 ? 'rgba(0,0,0,.02)' : 'transparent',
-                            }}
-                          >
-                            {columns.map((c) => renderCell(row, c.key, c.align))}
+                          <tr key={i}>
+                            {columns.map((c) => renderCell(row, c.key, c.align, c.numeric))}
                           </tr>
                         ))
                       )}
@@ -356,35 +374,13 @@ export default function Analitica() {
                 </div>
 
                 {/* Paginación */}
-                <div
-                  className="pv-card-footer"
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderTop: 'none',
-                    paddingTop: 12,
-                  }}
-                >
+                <div className="pv-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: 'none', paddingTop: 12 }}>
                   <span className="hint">
-                    Mostrando {(page - 1) * PAGE_SIZE + 1} –{' '}
-                    {Math.min(page * PAGE_SIZE, resultado.data.length)} de {resultado.data.length}
+                    Mostrando {(page - 1) * PAGE_SIZE + 1} – {Math.min(page * PAGE_SIZE, (resultado?.data ?? []).length)} de {(resultado?.data ?? []).length}
                   </span>
                   <div className="btn-group">
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page <= 1}
-                    >
-                      Prev
-                    </button>
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page >= totalPages}
-                    >
-                      Next
-                    </button>
+                    <button className="btn btn-outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>Prev</button>
+                    <button className="btn btn-outline" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</button>
                   </div>
                 </div>
               </div>
@@ -404,18 +400,13 @@ export default function Analitica() {
                 </div>
                 <div>
                   <div className="hint">Unidades totales</div>
-                  <strong style={{ fontSize: 18 }}>
-                    {prettyInt(resumen?.totalUnidades ?? 0)}
-                  </strong>
+                  <strong style={{ fontSize: 18 }}>{prettyInt(resumen?.totalUnidades ?? 0)}</strong>
                 </div>
               </div>
             </aside>
           </section>
         ) : (
-          <section
-            className="pv-card p-5"
-            style={{ textAlign: 'center', color: '#6b7280', borderRadius: 14 }}
-          >
+          <section className="pv-card p-5" style={{ textAlign: 'center', color: '#6b7280', borderRadius: 14 }}>
             Ejecuta una consulta para ver resultados en la tabla.
           </section>
         )}

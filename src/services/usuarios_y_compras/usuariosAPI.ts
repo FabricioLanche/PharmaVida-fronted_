@@ -20,6 +20,7 @@ export interface UpdateUserData {
   apellido?: string
   email?: string
   password?: string
+  distrito?: string
 }
 
 export const usuariosService = {

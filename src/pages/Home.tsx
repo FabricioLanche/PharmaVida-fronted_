@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/AuthContext'
 import Navbar from '../components/commons/Navbar'
 import Footer from '../components/commons/Footer'
 import ProductoCard from '../components/productos/ProductoCard'
@@ -7,8 +6,6 @@ import { productosService } from '../services/productos_y_ofertas/productosAPI'
 import { type ProductosResponse, type ProductosFiltros, TIPOS_PRODUCTOS } from '../types/producto.types'
 
 function Home() {
-  const { user, isAuthenticated } = useAuth()
-
   const [productosData, setProductosData] = useState<ProductosResponse | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -76,11 +73,15 @@ function Home() {
 
       <main className="container-xl">
         <section className="pv-card p-4 mb-6">
-          <h2 className="title-xl">Productos</h2>
+          <h2 className="title-xl" style={{ marginBottom: '1.5rem' }}>Productos</h2>
 
           {/* Buscador */}
           <form onSubmit={handleBuscar} className="mb-3">
-            <div className="search-row">
+            <div style={{ 
+              display: 'flex', 
+              gap: '0.5rem',
+              marginBottom: '1rem'
+            }}>
               <input
                 type="text"
                 placeholder="Buscar por nombre"
@@ -89,8 +90,12 @@ function Home() {
                 onClick={() => { setShowFiltros(true); setToggleVisible(true) }}
                 onChange={(e) => setBusqueda(e.target.value)}
                 disabled={filtroActivo !== 'ninguno' && filtroActivo !== 'nombre'}
-                className="form-control flex-1"
                 style={{
+                  flex: 1,
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '0.95rem',
                   opacity: (filtroActivo !== 'ninguno' && filtroActivo !== 'nombre') ? 0.6 : 1,
                   cursor: (filtroActivo !== 'ninguno' && filtroActivo !== 'nombre') ? 'not-allowed' : 'text'
                 }}
@@ -98,7 +103,17 @@ function Home() {
               <button
                 type="submit"
                 disabled={!busqueda.trim() || (filtroActivo !== 'ninguno' && filtroActivo !== 'nombre')}
-                className="btn btn-primary"
+                style={{
+                  padding: '0.5rem 1.5rem',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: !busqueda.trim() || (filtroActivo !== 'ninguno' && filtroActivo !== 'nombre') ? 'not-allowed' : 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: '500',
+                  opacity: !busqueda.trim() || (filtroActivo !== 'ninguno' && filtroActivo !== 'nombre') ? 0.6 : 1
+                }}
                 onClick={() => setToggleVisible(true)}
               >
                 Buscar
@@ -106,7 +121,16 @@ function Home() {
               <button
                 type="button"
                 onClick={() => { setFiltros({ page: 1, pagesize: 25 }); setBusqueda('') }}
-                className="btn btn-accent"
+                style={{
+                  padding: '0.5rem 1.5rem',
+                  backgroundColor: '#ff8c00',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: '500'
+                }}
               >
                 Refrescar
               </button>
@@ -199,12 +223,17 @@ function Home() {
             </div>
           )}
 
-          {/* Tarjetas de productos */}
+          {/* Tarjetas de productos - DISEÑO DE LISTA */}
           {loading ? (
             <p className="text-center text-lg">Cargando productos...</p>
           ) : productosData ? (
             <>
-              <div className="grid-chafa mb-4">
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '4.5rem 1.5rem',
+                marginBottom: '2rem'
+              }}>
                 {productosData.productos.map((p) => (
                   <ProductoCard key={p.id} producto={p} />
                 ))}
@@ -212,28 +241,50 @@ function Home() {
 
               {/* Paginación ABAJO */}
               {productosData.total > productosData.pagesize && (
-                <div
-                  className="pv-card-footer"
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <span className="page-label">
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '1rem 0',
+                  borderTop: '1px solid #e0e0e0'
+                }}>
+                  <span style={{ 
+                    fontSize: '0.9rem',
+                    color: '#666'
+                  }}>
                     Page {paginaActual}{showTotal && totalPages ? ` / ${totalPages}` : ''}
                   </span>
 
-                  <div className="btn-group">
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                       type="button"
-                      className="btn btn-outline"
                       disabled={!hasPrev}
                       onClick={() => handlePageChange((paginaActual ?? 1) - 1)}
+                      style={{
+                        padding: '0.4rem 1rem',
+                        backgroundColor: hasPrev ? 'white' : '#f5f5f5',
+                        color: hasPrev ? '#333' : '#999',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        cursor: hasPrev ? 'pointer' : 'not-allowed',
+                        fontSize: '0.9rem'
+                      }}
                     >
                       Prev
                     </button>
                     <button
                       type="button"
-                      className="btn btn-outline"
                       disabled={!hasNext}
                       onClick={() => handlePageChange((paginaActual ?? 1) + 1)}
+                      style={{
+                        padding: '0.4rem 1rem',
+                        backgroundColor: hasNext ? 'white' : '#f5f5f5',
+                        color: hasNext ? '#333' : '#999',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        cursor: hasNext ? 'pointer' : 'not-allowed',
+                        fontSize: '0.9rem'
+                      }}
                     >
                       Next
                     </button>

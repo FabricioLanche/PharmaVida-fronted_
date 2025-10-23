@@ -11,7 +11,7 @@ function Login() {
   const [formData, setFormData] = useState({
     emailOrDni: '',
     password: '',
-    useEmail: true,
+    useEmail: false, // Comenzamos con DNI como en la imagen
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -31,7 +31,6 @@ function Login() {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token)
 
-        // Refrescar datos del usuario
         const userInfoResponse = await usuariosService.getMyInfo()
         const userData = {
           nombre: userInfoResponse.data.nombre,
@@ -61,7 +60,7 @@ function Login() {
     setFormData(prev => ({
       ...prev,
       useEmail,
-      emailOrDni: '', // al cambiar modo, limpiamos el campo
+      emailOrDni: '',
     }))
     setError('')
   }
@@ -73,65 +72,65 @@ function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--pv-bg, #f5faf7)',
-        padding: '2rem',
+        background: '#f5f5f5',
+        padding: '1rem',
       }}
     >
       <div
-        className="pv-card"
         style={{
           width: '100%',
-          maxWidth: 520,
-          padding: '1.5rem',
-          borderRadius: 12,
+          maxWidth: 380,
+          background: '#fff',
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '2rem 1.5rem',
         }}
       >
-        {/* Título con barra lateral */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ width: 6, height: 28, background: '#f59e0b', borderRadius: 4, marginRight: 10 }} />
-          <h1 style={{ fontSize: '1.4rem', margin: 0, color: '#1f2937' }}>Iniciar sesión</h1>
+        {/* Título con barra naranja */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ width: 4, height: 24, background: '#ff8c42', marginRight: 12 }} />
+          <h1 style={{ fontSize: '1.25rem', margin: 0, color: '#333', fontWeight: 600 }}>
+            Iniciar sesión
+          </h1>
         </div>
 
-        {/* Selector Email / DNI como pestañas */}
+        {/* Pestañas Email / DNI */}
         <div
           style={{
-            display: 'flex',
-            gap: 8,
-            marginBottom: '1rem',
+            display: 'inline-flex',
+            border: '1px solid #ddd',
+            borderRadius: 4,
+            overflow: 'hidden',
+            marginBottom: '1.5rem',
           }}
-          role="tablist"
-          aria-label="Modo de autenticación"
         >
           <button
             type="button"
-            role="tab"
-            aria-selected={formData.useEmail}
-            className="btn"
             onClick={() => toggleMode(true)}
             style={{
-              background: formData.useEmail ? '#f59e0b' : 'transparent',
-              color: formData.useEmail ? '#fff' : '#374151',
-              border: formData.useEmail ? 'none' : '1px solid #e5e7eb',
-              padding: '.35rem .8rem',
-              borderRadius: 8,
-              fontWeight: 700,
+              padding: '0.4rem 1.2rem',
+              background: formData.useEmail ? '#fff' : '#f5f5f5',
+              border: 'none',
+              borderRight: '1px solid #ddd',
+              color: '#333',
+              fontSize: '0.9rem',
+              fontWeight: formData.useEmail ? 600 : 400,
+              cursor: 'pointer',
             }}
           >
             Email
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={!formData.useEmail}
-            className="btn"
             onClick={() => toggleMode(false)}
             style={{
-              background: !formData.useEmail ? '#f59e0b' : 'transparent',
-              color: !formData.useEmail ? '#fff' : '#374151',
-              border: !formData.useEmail ? 'none' : '1px solid #e5e7eb',
-              padding: '.35rem .8rem',
-              borderRadius: 8,
-              fontWeight: 700,
+              padding: '0.4rem 1.2rem',
+              background: !formData.useEmail ? '#fff' : '#f5f5f5',
+              border: 'none',
+              color: '#333',
+              fontSize: '0.9rem',
+              fontWeight: !formData.useEmail ? 600 : 400,
+              cursor: 'pointer',
             }}
           >
             DNI
@@ -139,26 +138,35 @@ function Login() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Campo email/dni */}
-          <div style={{ marginBottom: '0.85rem' }}>
+          {/* Campo DNI/Email */}
+          <div style={{ marginBottom: '1.2rem' }}>
             <label
               htmlFor="emailOrDni"
-              className="form-label"
-              style={{ display: 'block', marginBottom: 6 }}
+              style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                fontSize: '0.875rem',
+                color: '#666',
+              }}
             >
               {formData.useEmail ? 'Email' : 'DNI'}
             </label>
-
             {formData.useEmail ? (
               <input
                 id="emailOrDni"
                 type="email"
-                className="form-control"
-                placeholder="tucorreo@dominio.com"
                 value={formData.emailOrDni}
                 onChange={(e) => setFormData({ ...formData, emailOrDni: e.target.value })}
                 required
-                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 4,
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
               />
             ) : (
               <input
@@ -168,29 +176,51 @@ function Login() {
                 pattern="[0-9]{8,12}"
                 minLength={8}
                 maxLength={12}
-                className="form-control"
-                placeholder="Ingresa tu DNI"
                 value={formData.emailOrDni}
                 onChange={(e) => setFormData({ ...formData, emailOrDni: e.target.value })}
                 required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 4,
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
               />
             )}
           </div>
 
-          {/* Password */}
-          <div style={{ marginBottom: '0.85rem' }}>
-            <label htmlFor="password" className="form-label" style={{ display: 'block', marginBottom: 6 }}>
+          {/* Campo Contraseña */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label
+              htmlFor="password"
+              style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                fontSize: '0.875rem',
+                color: '#666',
+              }}
+            >
               Contraseña
             </label>
             <input
               id="password"
               type="password"
-              className="form-control"
-              placeholder="••••••••"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
               minLength={6}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #e0e0e0',
+                borderRadius: 4,
+                fontSize: '0.95rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
@@ -202,42 +232,63 @@ function Login() {
                 background: '#fee2e2',
                 color: '#991b1b',
                 border: '1px solid #fecaca',
-                borderRadius: 8,
-                padding: '.6rem .8rem',
-                marginBottom: '.9rem',
-                fontSize: '.95rem',
+                borderRadius: 4,
+                padding: '0.75rem',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
               }}
             >
               {error}
             </div>
           )}
 
-          {/* Botón ingresar */}
+          {/* Botón Ingresar */}
           <button
             type="submit"
-            className="btn btn-primary"
             disabled={loading}
-            style={{ width: '100%', fontWeight: 700 }}
+            style={{
+              width: '100%',
+              padding: '0.85rem',
+              background: loading ? '#4caf50aa' : '#4caf50',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 4,
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+            }}
           >
-            {loading ? 'Iniciando…' : 'Ingresar'}
+            {loading ? 'Iniciando...' : 'Ingresar'}
           </button>
         </form>
 
-        {/* Footer de la tarjeta */}
+        {/* Footer */}
         <div
-          className="pv-card-footer"
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            paddingTop: '1rem',
-            borderTop: '1px solid var(--pv-border, #e5e7eb)',
-            marginTop: '1rem',
+            marginTop: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.875rem',
           }}
         >
-          <Link to="/register" className="pv-link">
+          <Link
+            to="/register"
+            style={{
+              color: '#ff8c42',
+              textDecoration: 'none',
+              marginRight: '0.5rem',
+            }}
+          >
             Crear cuenta
           </Link>
-          <Link to="/" className="pv-link">
+          <span style={{ color: '#999' }}>•</span>
+          <Link
+            to="/"
+            style={{
+              color: '#4caf50',
+              textDecoration: 'none',
+              marginLeft: '0.5rem',
+            }}
+          >
             Volver al inicio
           </Link>
         </div>

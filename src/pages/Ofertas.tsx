@@ -158,7 +158,7 @@ function Ofertas() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '1.5rem'
+            gap: '6rem 2rem'
           }}>
             {ofertasFiltradas.map(oferta => (
               <OfertaCard key={oferta.id} oferta={oferta} />
