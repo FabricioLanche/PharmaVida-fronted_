@@ -1,11 +1,46 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Navbar from '../components/commons/Navbar'
 import Footer from '../components/commons/Footer'
 import { productosService } from '../services/productos_y_ofertas/productosAPI'
 import { TIPOS_PRODUCTOS } from '../types/producto.types'
 
+type ProductoBasic = {
+  id: number
+  nombre: string
+  precio: number
+  stock: number
+}
+
+const PAGE_SIZE = 25
+
 function AdminProductos() {
-  // Estados para productos
+  // ---------- Dashboard (listado)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [productos, setProductos] = useState<ProductoBasic[]>([])
+  const [loadingList, setLoadingList] = useState(false)
+
+  const cargarProductos = async () => {
+    setLoadingList(true)
+    try {
+      const resp = await productosService.listar({ page, pagesize: PAGE_SIZE })
+      const data = resp?.data || {}
+      const items: ProductoBasic[] = data.productos || data.items || []
+      setProductos(items)
+      setTotal(Number(data.total ?? items.length ?? 0))
+    } catch (e) {
+      console.error(e)
+      alert('❌ Error al cargar productos')
+    } finally {
+      setLoadingList(false)
+    }
+  }
+
+  useEffect(() => { cargarProductos() }, [page])
+
+  const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE))
+
+  // ---------- Formularios de gestión
   const [nuevoProducto, setNuevoProducto] = useState({
     nombre: '',
     tipo: 'Analgesico',
@@ -33,6 +68,9 @@ function AdminProductos() {
         stock: 0,
         requiere_receta: false,
       })
+      // refresca dashboard
+      setPage(1)
+      cargarProductos()
     } catch (error: any) {
       alert(`❌ Error: ${error.message}`)
     }
@@ -45,6 +83,7 @@ function AdminProductos() {
         stock: actualizarProducto.stock,
       })
       alert(`✅ Producto actualizado: ${JSON.stringify(response.data)}`)
+      cargarProductos()
     } catch (error: any) {
       alert(`❌ Error: ${error.message}`)
     }
@@ -55,6 +94,7 @@ function AdminProductos() {
     try {
       await productosService.deleteProducto(eliminarProductoId)
       alert(`✅ Producto eliminado`)
+      cargarProductos()
     } catch (error: any) {
       alert(`❌ Error: ${error.message}`)
     }
@@ -64,144 +104,197 @@ function AdminProductos() {
     <div>
       <Navbar />
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-        <h1>Administración de Productos</h1>
+      <main className="container-xl" style={{ paddingBottom: '2rem' }}>
+        {/* DASHBOARD */}
+        <section className="pv-card p-4 mb-6">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+            <h2 className="title-xl" style={{ margin: 0 }}>Dashboard de Productos</h2>
+            <div className="btn-group">
+              <button className="btn btn-outline" onClick={() => { setPage(1); cargarProductos() }} disabled={loadingList}>
+                Refrescar
+              </button>
+            </div>
+          </div>
 
-        {/* Crear Producto */}
-        <section style={{ marginBottom: '3rem', padding: '1rem', border: '1px solid #ddd' }}>
-          <h2>Crear Producto</h2>
+          <div style={{ marginTop: 12, marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="hint">
+              Página {page}{page > 1 && total ? ` / ${totalPages}` : ''} • {total} productos
+            </span>
+            <div className="btn-group">
+              <button
+                className="btn btn-outline"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1 || loadingList}
+              >
+                Prev
+              </button>
+              <button
+                className="btn btn-outline"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || loadingList}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          {loadingList ? (
+            <p style={{ marginTop: 8 }}>Cargando productos…</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'separate',
+                  borderSpacing: 0,
+                  background: '#fff',
+                }}
+              >
+                <thead>
+                  <tr>
+                    {['ID', 'Nombre', 'Precio (S/)', 'Stock'].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          position: 'sticky',
+                          top: 0,
+                          background: '#fff',
+                          textAlign: 'left',
+                          padding: '10px 12px',
+                          borderBottom: '1px solid #e5e7eb',
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {productos.map((p, idx) => (
+                    <tr key={p.id} style={{ background: idx % 2 ? 'rgba(2,6,23,.02)' : 'transparent' }}>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eef2f7' }}>{p.id}</td>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eef2f7' }}>{p.nombre}</td>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eef2f7' }}>
+                        {Number(p.precio).toFixed(2)}
+                      </td>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eef2f7' }}>{p.stock}</td>
+                    </tr>
+                  ))}
+                  {productos.length === 0 && (
+                    <tr>
+                      <td colSpan={4} style={{ padding: 12, color: '#64748b' }}>No hay productos.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Paginación al pie también */}
+          {total > PAGE_SIZE && (
+            <div className="pv-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="hint">Página {page} / {totalPages}</span>
+              <div className="btn-group">
+                <button className="btn btn-outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1 || loadingList}>
+                  Prev
+                </button>
+                <button className="btn btn-outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages || loadingList}>
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* CREAR */}
+        <section className="pv-card p-4 mb-6">
+          <h2 className="title-md">Crear Producto</h2>
           <div>
-            <label>Nombre: </label>
+            <label>Nombre</label>
             <input
               value={nuevoProducto.nombre}
               onChange={(e) => setNuevoProducto({ ...nuevoProducto, nombre: e.target.value })}
-              style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+              className="form-control mb-2"
             />
 
-            <label>Tipo: </label>
+            <label>Tipo</label>
             <select
               value={nuevoProducto.tipo}
               onChange={(e) => setNuevoProducto({ ...nuevoProducto, tipo: e.target.value })}
-              style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+              className="form-select mb-2"
             >
               {TIPOS_PRODUCTOS.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo}
-                </option>
+                <option key={tipo} value={tipo}>{tipo}</option>
               ))}
             </select>
 
-            <label>Precio: </label>
+            <label>Precio</label>
             <input
               type="number"
               value={nuevoProducto.precio}
               onChange={(e) => setNuevoProducto({ ...nuevoProducto, precio: Number(e.target.value) })}
-              style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+              className="form-control mb-2"
             />
 
-            <label>Stock: </label>
+            <label>Stock</label>
             <input
               type="number"
               value={nuevoProducto.stock}
               onChange={(e) => setNuevoProducto({ ...nuevoProducto, stock: Number(e.target.value) })}
-              style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+              className="form-control mb-2"
             />
 
-            <label>
+            <label className="mb-2">
               <input
                 type="checkbox"
                 checked={nuevoProducto.requiere_receta}
-                onChange={(e) =>
-                  setNuevoProducto({ ...nuevoProducto, requiere_receta: e.target.checked })
-                }
+                onChange={(e) => setNuevoProducto({ ...nuevoProducto, requiere_receta: e.target.checked })}
+                style={{ marginRight: 8 }}
               />
-              {' '}Requiere Receta
+              Requiere Receta
             </label>
 
-            <button
-              onClick={handleCrearProducto}
-              style={{
-                display: 'block',
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: '#27ae60',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Crear Producto
-            </button>
+            <button className="btn btn-primary" onClick={handleCrearProducto}>Crear Producto</button>
           </div>
         </section>
 
-        {/* Actualizar Producto */}
-        <section style={{ marginBottom: '3rem', padding: '1rem', border: '1px solid #ddd' }}>
-          <h2>Actualizar Stock de Producto</h2>
+        {/* ACTUALIZAR */}
+        <section className="pv-card p-4 mb-6">
+          <h2 className="title-md">Actualizar Stock de Producto</h2>
           <div>
-            <label>ID del Producto: </label>
+            <label>ID del Producto</label>
             <input
               type="number"
               value={actualizarProducto.id}
-              onChange={(e) =>
-                setActualizarProducto({ ...actualizarProducto, id: Number(e.target.value) })
-              }
-              style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+              onChange={(e) => setActualizarProducto({ ...actualizarProducto, id: Number(e.target.value) })}
+              className="form-control mb-2"
             />
 
-            <label>Nuevo Stock: </label>
+            <label>Nuevo Stock</label>
             <input
               type="number"
               value={actualizarProducto.stock}
-              onChange={(e) =>
-                setActualizarProducto({ ...actualizarProducto, stock: Number(e.target.value) })
-              }
-              style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+              onChange={(e) => setActualizarProducto({ ...actualizarProducto, stock: Number(e.target.value) })}
+              className="form-control mb-2"
             />
 
-            <button
-              onClick={handleActualizarProducto}
-              style={{
-                display: 'block',
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: '#f39c12',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Actualizar Producto
-            </button>
+            <button className="btn btn-accent" onClick={handleActualizarProducto}>Actualizar Producto</button>
           </div>
         </section>
 
-        {/* Eliminar Producto */}
-        <section style={{ marginBottom: '3rem', padding: '1rem', border: '1px solid #ddd' }}>
-          <h2>Eliminar Producto</h2>
+        {/* ELIMINAR */}
+        <section className="pv-card p-4 mb-6">
+          <h2 className="title-md">Eliminar Producto</h2>
           <div>
-            <label>ID del Producto: </label>
+            <label>ID del Producto</label>
             <input
               type="number"
               value={eliminarProductoId}
               onChange={(e) => setEliminarProductoId(Number(e.target.value))}
-              style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+              className="form-control mb-2"
             />
 
-            <button
-              onClick={handleEliminarProducto}
-              style={{
-                display: 'block',
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Eliminar Producto
-            </button>
+            <button className="btn btn-danger" onClick={handleEliminarProducto}>Eliminar Producto</button>
           </div>
         </section>
       </main>
